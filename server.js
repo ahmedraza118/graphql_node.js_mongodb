@@ -4,11 +4,8 @@ import { createHandler } from 'graphql-http/lib/use/express';
 import  schema from "./schema.js";
 
 const app = express();
+const port = 3000;
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost/school', { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Enable CORS for development purposes
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
@@ -18,7 +15,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-// Add middleware to parse JSON bodies
 app.use(express.json());
 
 app.all('/graphql', (req, res, next) => {
@@ -29,7 +25,21 @@ app.all('/graphql', (req, res, next) => {
     })(req, res, next);
   });
 
-const port = 3000;
-app.listen(port, () => {
-  console.log(`GraphQL server running at http://localhost:${port}/graphql`);
-});
+const connectToDatabase = async () => {
+  try {
+    await mongoose.connect('mongodb://localhost/school', { useNewUrlParser: true, useUnifiedTopology: true });
+    console.log('Connected to the database');
+  } catch (error) {
+    console.error('Error connecting to the database:', error.message);
+    process.exit(1);
+  }
+};
+
+const startServer = () => {
+  app.listen(port, () => {
+    console.log(`GraphQL server running at http://localhost:${port}/graphql`);
+  });
+};
+
+// Connect to the database and then start the server
+connectToDatabase().then(startServer);
